@@ -382,32 +382,105 @@ function group(array, keySelector, valueSelector) {
  */
 
 const cssSelectorBuilder = {
-  element(/* value */) {
-    throw new Error('Not implemented');
+  selector: '',
+  lastSelector: 0,
+  oneTimers: {
+    hasElement: false,
+    hasId: false,
+    hasPseudoElement: false,
+  },
+  element(value) {
+    const oneTimers = { ...this.oneTimers };
+    if (oneTimers.hasElement) {
+      throw new Error(
+        'Element, id and pseudo-element should not occur more then one time inside the selector'
+      );
+    }
+    if (this.lastSelector > 1) {
+      throw new Error(
+        'Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element'
+      );
+    }
+    const selector = this.selector + value;
+    oneTimers.hasElement = true;
+    return { ...this, selector, oneTimers, lastSelector: 1 };
   },
 
-  id(/* value */) {
-    throw new Error('Not implemented');
+  id(value) {
+    const oneTimers = { ...this.oneTimers };
+    if (oneTimers.hasId) {
+      throw new Error(
+        'Element, id and pseudo-element should not occur more then one time inside the selector'
+      );
+    }
+    if (this.lastSelector > 2) {
+      throw new Error(
+        'Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element'
+      );
+    }
+    const selector = `${this.selector}#${value}`;
+    oneTimers.hasId = true;
+    return { ...this, selector, oneTimers, lastSelector: 2 };
   },
 
-  class(/* value */) {
-    throw new Error('Not implemented');
+  class(value) {
+    if (this.lastSelector > 3) {
+      throw new Error(
+        'Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element'
+      );
+    }
+    const selector = `${this.selector}.${value}`;
+    return { ...this, selector, lastSelector: 3 };
   },
 
-  attr(/* value */) {
-    throw new Error('Not implemented');
+  attr(value) {
+    if (this.lastSelector > 4) {
+      throw new Error(
+        'Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element'
+      );
+    }
+    const selector = `${this.selector}[${value}]`;
+    return { ...this, selector, lastSelector: 4 };
   },
 
-  pseudoClass(/* value */) {
-    throw new Error('Not implemented');
+  pseudoClass(value) {
+    if (this.lastSelector > 5) {
+      throw new Error(
+        'Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element'
+      );
+    }
+    const selector = `${this.selector}:${value}`;
+    return { ...this, selector, lastSelector: 5 };
   },
 
-  pseudoElement(/* value */) {
-    throw new Error('Not implemented');
+  pseudoElement(value) {
+    const oneTimers = { ...this.oneTimers };
+    if (oneTimers.hasPseudoElement) {
+      throw new Error(
+        'Element, id and pseudo-element should not occur more then one time inside the selector'
+      );
+    }
+    if (this.lastSelector > 6) {
+      throw new Error(
+        'Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element'
+      );
+    }
+    const selector = `${this.selector}::${value}`;
+    oneTimers.hasPseudoElement = true;
+    return { ...this, selector, oneTimers, lastSelector: 6 };
   },
 
-  combine(/* selector1, combinator, selector2 */) {
-    throw new Error('Not implemented');
+  combine(selector1, combinator, selector2) {
+    const sel1 = selector1.stringify();
+    const sel2 = selector2.stringify();
+    const selector = `${this.selector}${sel1} ${combinator} ${sel2}`;
+    return { ...this, selector };
+  },
+
+  stringify() {
+    const str = this.selector;
+    this.selector = '';
+    return str;
   },
 };
 
